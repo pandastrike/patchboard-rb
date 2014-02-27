@@ -1,12 +1,13 @@
 class Patchboard
   class Response
 
+    attr_accessor :resource
     attr_reader :raw, :data
     def initialize(raw)
       @raw = raw
       if @raw.headers["Content-Type"]
-        if @raw.headers["Content-Type"] =~ %r{json}
-          @data = JSON.parse @raw.body
+        if @raw.headers["Content-Type"] =~ %r{application/.*json}
+          @data = JSON.parse @raw.body, :symbolize_names => true
         end
       end
     end
@@ -19,7 +20,7 @@ class Patchboard
       end
     end
 
-    def respond_to?(name, include_private=false)
+    def respond_to?(*args)
       @raw.respond_to?(*args) || super
     end
 

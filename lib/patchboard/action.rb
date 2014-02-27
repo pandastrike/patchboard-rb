@@ -44,6 +44,9 @@ class Patchboard
       if response.status != @status
         raise "Unexpected response status: #{response.status}"
       end
+      if @response_schema
+        response.resource = @patchboard.decorate(@response_schema, response.data)
+      end
       response
     end
 

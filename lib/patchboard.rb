@@ -4,25 +4,32 @@ gem "json"
 require "http"
 require "json"
 
+require_relative "patchboard/util"
+require_relative "patchboard/api"
 require_relative "patchboard/endpoints"
 require_relative "patchboard/action"
 require_relative "patchboard/schema_manager"
 
-def camel_case( string )  
-  string.split('_').map do |word|
-    "#{word.slice(/^\w/).upcase}#{word.slice(/^\w(\w+)/, 1)}"
-  end.join
-end
-
 class Patchboard
+
   module Resources
+    # This module exists to provide a namespace for the classes
+    # generated when reflecting on the API.
   end
 
   class Resource
 
     def initialize(attrs={})
       @attrs = attrs
-      @url = @attrs["url"] || self.class.generate_url(@attrs)
+      @url = @attrs[:url] || self.class.generate_url(@attrs)
+    end
+
+    def [](key)
+      @attrs[key]
+    end
+
+    def []=(key, value)
+      @attrs[key] = value
     end
 
     def method_missing(name, *args)
@@ -38,20 +45,6 @@ class Patchboard
   end
 
 
-
-  class API
-    attr_reader :mappings, :resources, :schemas, :service_url
-
-    def initialize(definition)
-      @mappings = definition["mappings"]
-      #pp @mappings
-      @resources = definition["resources"]
-      @schemas = definition["schemas"]
-      @service_url = definition["service_url"]
-    end
-  end
-
-
   def self.http
     @http ||= HTTP.with_headers "User-Agent" => "patchboard-rb v0.1.0"
   end
@@ -63,7 +56,7 @@ class Patchboard
         :headers => {
           "Accept" => "application/json"
         }
-      data = JSON.parse(response.body)
+      data = JSON.parse(response.body, :symbolize_names => true)
       self.new(data, options)
     rescue JSON::ParserError => error
       raise "Unparseable API description: #{error}"
@@ -72,7 +65,7 @@ class Patchboard
     end
   end
 
-  attr_reader :resources, :resource_classes, :http
+  attr_reader :resources, :resource_classes, :http, :schema_manager
 
   def initialize(api, options={})
     @api = API.new(api)
@@ -81,7 +74,6 @@ class Patchboard
     @resource_classes = {}
     @endpoint_classes = {}
 
-    #self.validate_api(api)
     @schema_manager = SchemaManager.new(@api.schemas)
 
     @http = self.class.http
@@ -91,8 +83,7 @@ class Patchboard
 
   def create_classes
     @api.mappings.each do |name, mapping|
-      # validation
-      resource_name = mapping["resource"]
+      resource_name = mapping[:resource].to_sym
       next if !resource_name
 
       klass = @resource_classes[resource_name] ||= begin
@@ -110,16 +101,19 @@ class Patchboard
     end
 
     klass = Class.new(Resource) do |klass|
+      # TODO: define attr_readers for the known attributes.
       define_singleton_method :generate_url do |params|
         foo.call(params)
       end
 
-      if mapping && mapping["query"]
-        @query = mapping["query"]
+      if mapping && mapping[:query]
+        define_singleton_method :query do
+          #mapping[:query]
+        end
       end
 
-      definition["actions"].each do |name, action|
-        action =  Action.new(patchboard, name, action)
+      definition[:actions].each do |name, action|
+        action = Action.new(patchboard, name, action)
 
         define_method name do |*args|
           action.request @url, *args
@@ -127,30 +121,30 @@ class Patchboard
       end
 
     end
-    Patchboard::Resources.const_set camel_case(resource_name).to_sym, klass
+    Patchboard::Resources.const_set Util.camel_case(resource_name.to_s).to_sym, klass
   end
 
 
   def generate_url(mapping, params={})
-    if mapping["url"]
-      base = mapping["url"]
-    elsif path = mapping["path"]
+    if mapping[:url]
+      base = mapping[:url]
+    elsif path = mapping[:path]
       if @api.service_url
         base = [@api.service_url, path].join("/")
       else
         raise "Tried to generate url from path, but API did not define service_url"
       end
-    elsif template = mapping["template"]
+    elsif template = mapping[:template]
       raise "Template mappings are not yet implemented in the client"
     end
 
-    if query = mapping["query"]
+    if query = mapping[:query]
       parts = []
       keys = query.keys.sort()
       # TODO check query schema
       keys.each do |key|
         if string = (params[key.to_s] || params[key.to_sym])
-          parts << "#{URI.escape(key)}=#{URI.escape(string)}"
+          parts << "#{URI.escape(key.to_s)}=#{URI.escape(string)}"
         end
       end
       if parts.size > 0
@@ -164,10 +158,60 @@ class Patchboard
     end
   end
 
-  def decorate()
+  def decorate(schema, data)
+    if schema[:id] && (name = schema[:id].split("#")[1])
+      if klass = @resource_classes[name.to_sym]
+        _data = data
+        if klass.query
+          data = lambda do |params|
+            _data[:url] = klass.generate_url(params)
+            klass.new(_data)
+          end
+        else
+          data = klass.new(_data)
+        end
+      end
+    end
+    self._decorate(schema, data) || data
   end
 
-  def _decorate()
+  def _decorate(schema=nil, data=nil)
+    return unless (schema && data)
+    if ref = schema[:$ref]
+      puts "following ref: #{ref}"
+      ref_schema = @schema_manager.find :ref => ref
+      self.decorate ref_schema, data
+    else
+      if schema[:type] == "array"
+        if schema[:items]
+          data.each_with_index do |item, i|
+            if result = self.decorate(schema[:items], item)
+              data[i] = result
+            end
+          end
+        end
+      else
+        # not array, so figure out what
+        case schema[:type]
+        when "string", "number", "integer", "boolean"
+          nil
+        else
+          schema[:properties].each do |key, value|
+            if result = self.decorate(value, data[key.to_sym])
+              data[key.to_sym] = result
+            end
+          end
+          if addprop = schema[:additionalProperties]
+            data.each do |key, value|
+              unless schema[:properties] && schema[:properties][key.to_sym]
+                data[key] = self.decorate(addprop, value)
+              end
+            end
+          end
+          data
+        end
+      end
+    end
   end
 
 end
