@@ -3,38 +3,36 @@ class Patchboard
 
   class SchemaManager
 
-    def initialize(*schemas)
-      #@schemas = schemas
-      #@media_types = {}
-      #@ids = {}
+    def initialize(schemas)
+      @schemas = schemas
+      @media_types = {}
+      @references = {}
+      @ids = {}
 
-      #self.register_references(@schemas)
-
-      #schemas.each do |schema|
-        #base_id = schema["id"]
-        #if definitions = schema["definitions"]
-          #definitions.each do |name, definition|
-            #id = definition["id"] || [base_id.chomp("#"), name].join("#")
-            #self.register_schema(id, definition)
-          #end
-        #end
-      #end
-    end
-
-    def register(schema)
+      @schemas.each do |schema|
+        # TODO error checking for missing id
+        base_id = schema[:id].chomp("#")
+        schema[:definitions].each do |name, definition|
+          # `definitions` is the conventional place to put schemas,
+          # so we'll define fragment IDs by default where they are
+          # not explicitly specified.
+          id = definition[:id] || [base_id, name].join("#")
+          self.register_schema(id, definition)
+        end
+      end
     end
 
     def register_schema(id, schema)
-      schema["id"] = id
+      schema[:id] = id
       @ids[id] = schema
-      if type = schema["mediaType"]
+      if type = schema[:mediaType]
         @media_types[type] = schema
       end
     end
 
     def find(options)
-      if type = options[:mediaType]
-        "foo"
+      if type = options[:mediaType] || options[:media_type]
+        @media_types[type]
       elsif ref = options[:ref]
         @ids[ref]
       else
