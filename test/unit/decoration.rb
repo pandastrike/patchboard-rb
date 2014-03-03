@@ -69,7 +69,7 @@ describe "Decoration of response data" do
   describe "items in an array" do
     
     before do
-      @tags = @repo.refs[:tags]
+      @tags = @repo.refs.tags
     end
 
     it "is correct type" do

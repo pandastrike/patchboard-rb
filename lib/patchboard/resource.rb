@@ -1,3 +1,4 @@
+require "hashie"
 
 class Patchboard
 
@@ -49,36 +50,44 @@ class Patchboard
     end
 
     def self.decorate(instance, attributes)
+      # TODO: add some sort of validation for the input attributes.
+      # Hey, we have a JSON Schema, why not use it?
       if self.schema && (properties = self.schema[:properties])
         properties.each do |key, sub_schema|
+          puts "KEY: #{key}"
           next unless (value = attributes[key])
 
-          case sub_schema[:type]
-          when "string", "number", "integer", "boolean"
-            nil
-          when "array"
-            if item_schema = sub_schema[:items]
-              if mapping = self.api.find_mapping(item_schema)
-                value.each_with_index do |item, i|
-                  value[i] = mapping.klass.new item
-                end
+          if mapping = self.api.find_mapping(sub_schema)
+            if mapping.query
+              # TODO: find a way to define this at runtime, not once
+              # for every instance.
+              instance.define_singleton_method key do |params|
+                params[:url] = value[:url]
+                url = mapping.generate_url(params)
+                mapping.klass.new :url => url
               end
+            else
+              attributes[key] = mapping.klass.new value
             end
           else
-            if mapping = self.api.find_mapping(sub_schema)
-              if mapping.query
-                # TODO: find a way to define this at runtime, not once
-                # for every instance.
-                instance.define_singleton_method key do |params|
-                  params[:url] = value[:url]
-                  url = mapping.generate_url(params)
-                  mapping.klass.new :url => url
+
+            case sub_schema[:type]
+            when "string", "number", "integer", "boolean"
+              nil
+            when "array"
+              if item_schema = sub_schema[:items]
+                if mapping = self.api.find_mapping(item_schema)
+                  value.each_with_index do |item, i|
+                    value[i] = mapping.klass.new item
+                  end
                 end
-              else
-                attributes[key] = mapping.klass.new value
               end
+            when "object"
+            else
+              raise "cain"
             end
           end
+
         end
       end
       attributes
@@ -88,7 +97,7 @@ class Patchboard
     attr_reader :attributes
 
     def initialize(attributes={})
-      @attributes = self.class.decorate self, attributes
+      @attributes = self.class.decorate self, Hashie::Mash.new(attributes)
       @url = @attributes[:url]
     end
 
