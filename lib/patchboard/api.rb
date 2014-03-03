@@ -16,7 +16,7 @@ class Patchboard
 
       @mappings = {}
       definition[:mappings].each do |name, mapping|
-        @mappings[name] = Mapping.new(self, mapping)
+        @mappings[name] = Mapping.new(self, name, mapping)
       end
     end
 
@@ -73,10 +73,11 @@ class Patchboard
   class Mapping
 
     attr_accessor :klass
-    attr_reader :resource, :url, :path, :template, :query
+    attr_reader :name, :resource, :url, :path, :template, :query
 
-    def initialize(api, definition)
+    def initialize(api, name, definition)
       @api = api
+      @name = name
       @definition = definition
       @resource = @definition[:resource]
       @query = @definition[:query]
@@ -88,7 +89,7 @@ class Patchboard
         raise "Mapping does not specify 'resource'"
       end
 
-      unless (@resource_def = @api.resources[resource_name.to_sym])
+      unless (@resource = @api.resources[resource_name.to_sym])
         raise "Mapping specifies a resource that is not defined"
       end
 

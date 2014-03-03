@@ -18,8 +18,10 @@ user = response.resource
 pp
 
 questions = user.questions(:category => "Science")
-question = questions.ask().resource
-pp question
+response = questions.ask()
+question = response.resource
+pp question.question
+
 result = question.answer(:letter => "d").resource
 pp result
 

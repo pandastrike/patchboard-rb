@@ -19,16 +19,16 @@ class Patchboard
 
       if schema && schema[:properties]
         schema[:properties].each do |name, definition|
-          #define_method name do
-            #@attrs[name]
-          #end
+          define_method name do
+            @attributes[name]
+          end
         end
       end
 
       if schema && schema[:additionalProperties] != false
         define_method :method_missing do |name, *args, &block|
           if args.size == 0
-            @attrs[name.to_sym]
+            @attributes[name.to_sym]
           else
             super(name, *args, &block)
           end
@@ -48,10 +48,10 @@ class Patchboard
       end
     end
 
-    def self.decorate(instance, attrs)
+    def self.decorate(instance, attributes)
       if self.schema && (properties = self.schema[:properties])
         properties.each do |key, sub_schema|
-          next unless (value = attrs[key])
+          next unless (value = attributes[key])
 
           case sub_schema[:type]
           when "string", "number", "integer", "boolean"
@@ -67,36 +67,37 @@ class Patchboard
           else
             if mapping = self.api.find_mapping(sub_schema)
               if mapping.query
+                # TODO: find a way to define this at runtime, not once
+                # for every instance.
                 instance.define_singleton_method key do |params|
                   params[:url] = value[:url]
                   url = mapping.generate_url(params)
                   mapping.klass.new :url => url
                 end
               else
-                attrs[key] = mapping.klass.new value
+                attributes[key] = mapping.klass.new value
               end
             end
           end
         end
       end
-      attrs
+      attributes
     end
 
 
-    def initialize(attrs={})
-      @attrs = self.class.decorate self, attrs
+    attr_reader :attributes
 
-      #@url = @attrs[:url] || self.class.generate_url(@attrs)
-      @url = @attrs[:url]
-
+    def initialize(attributes={})
+      @attributes = self.class.decorate self, attributes
+      @url = @attributes[:url]
     end
 
     def [](key)
-      @attrs[key]
+      @attributes[key]
     end
 
     def []=(key, value)
-      @attrs[key] = value
+      @attributes[key] = value
     end
 
 

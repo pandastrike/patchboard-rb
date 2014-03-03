@@ -1,0 +1,36 @@
+{
+  "name": "jsck",
+  "url": "http://gh-knockoff.com/repos/automatthew/jsck",
+  "login": "automatthew",
+  "owner": {
+    "url": "http://gh-knockoff.com/user/automatthew",
+    "login": "automatthew",
+    "email": "automatthew@mail.com"
+  },
+  "refs": {
+    "main": {
+      "name": "master",
+      "commit": "6ed180cc0",
+      "message": "some new stuff"
+    },
+    "branches": {
+      "master": {
+        "name": "master",
+        "commit": "6ed180cc0",
+        "message": "some new stuff"
+      },
+      "release": {
+        "name": "release",
+        "commit": "dbc63b011",
+        "message": "some new stuff"
+      }
+    },
+    "tags": [
+      {
+        "name": "0.5.0",
+        "commit": "3bcab91f3",
+        "message": "some stuff"
+      }
+    ]
+  }
+}

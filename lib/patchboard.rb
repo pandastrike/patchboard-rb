@@ -4,9 +4,9 @@ gem "json"
 require "http"
 require "json"
 
+require_relative "patchboard/api"
 require_relative "patchboard/util"
 require_relative "patchboard/resource"
-require_relative "patchboard/api"
 require_relative "patchboard/endpoints"
 require_relative "patchboard/action"
 require_relative "patchboard/schema_manager"
@@ -14,8 +14,10 @@ require_relative "patchboard/schema_manager"
 class Patchboard
 
   module Resources
-    # This module exists to provide a namespace for the classes
-    # generated when reflecting on the API.
+    # This module exists to provide a default namespace for the classes
+    # generated when reflecting on the API.  If Patchboard is instantiated
+    # with the option :namespace => SomeModule, that module will be used
+    # instead.
   end
 
 
@@ -45,6 +47,14 @@ class Patchboard
     @api = API.new(api)
     @options = options
 
+    if options[:namespace]
+      if options[:namespace].is_a? Module
+        @namespace = options[:namespace]
+      else
+        raise "Namespace must be a Module"
+      end
+    end
+
     @resource_classes = {}
     @endpoint_classes = {}
 
@@ -57,14 +67,12 @@ class Patchboard
 
   def create_classes
     @api.mappings.each do |name, mapping|
-      resource_name = mapping.resource.to_sym
-      next if !resource_name
-
+      resource_name = mapping.resource.name.to_sym
       schema = @schema_manager.find :name => resource_name
 
-      klass = @resource_classes[resource_name] ||= begin
-        resource_def = @api.resources[resource_name]
-        self.create_class(resource_name, resource_def, schema, mapping)
+      klass = @resource_classes[name] ||= begin
+        resource_def = mapping.resource
+        self.create_class(name, resource_def, schema, mapping)
       end
       @endpoint_classes[name] = klass
     end
@@ -77,7 +85,11 @@ class Patchboard
       self.assemble(patchboard, definition, schema, mapping)
     end
 
-    Patchboard::Resources.const_set Util.camel_case(resource_name).to_sym, klass
+    if @namespace
+      @namespace.const_set Util.camel_case(resource_name).to_sym, klass
+    else
+      Patchboard::Resources.const_set Util.camel_case(resource_name).to_sym, klass
+    end
     klass
   end
 
