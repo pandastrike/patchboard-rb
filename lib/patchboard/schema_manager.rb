@@ -6,8 +6,8 @@ class Patchboard
     def initialize(schemas)
       @schemas = schemas
       @media_types = {}
-      @references = {}
       @ids = {}
+      @names = {}
 
       @schemas.each do |schema|
         # TODO error checking for missing id
@@ -25,6 +25,8 @@ class Patchboard
     def register_schema(id, schema)
       schema[:id] = id
       @ids[id] = schema
+      name = id.split("#")[1].to_sym
+      @names[name] = schema
       if type = schema[:mediaType]
         @media_types[type] = schema
       end
@@ -35,6 +37,8 @@ class Patchboard
         @media_types[type]
       elsif ref = options[:ref]
         @ids[ref]
+      elsif name = options[:name]
+        @names[name]
       else
         raise "Unusable argument to find: #{options}"
       end

@@ -9,6 +9,7 @@ class Patchboard
     def initialize(patchboard, name, definition)
       @name = name
       @patchboard = patchboard
+      @api = @patchboard.api
       @schema_manager = @patchboard.schema_manager
       @method = definition[:method]
 
@@ -45,7 +46,11 @@ class Patchboard
         raise "Unexpected response status: #{response.status}"
       end
       if @response_schema
-        response.resource = @patchboard.decorate(@response_schema, response.data)
+        if mapping = @api.find_mapping(@response_schema)
+          response.resource = mapping.klass.new response.data
+        else
+          response.resource = response.data
+        end
       end
       response
     end
