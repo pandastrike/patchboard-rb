@@ -31,9 +31,9 @@ describe "Decoration of response data" do
     end
 
     it "has expected attributes" do
-      assert @repo.attributes[:name]
-      assert @repo.attributes[:owner]
-      assert @repo.attributes[:refs]
+      [:name, :owner, :refs].each do |key|
+        assert @repo.attributes[key], "Missing attribute #{key}"
+      end
     end
 
     it "attributes are exposed via methods" do
@@ -72,22 +72,53 @@ describe "Decoration of response data" do
       @tags = @repo.refs.tags
     end
 
-    it "is correct type" do
+    it "have correct types" do
       @tags.each do |tag|
         assert_kind_of PatchboardTests::Tag, tag
       end
     end
    
-    #it "has expected action methods" do
-      #assert_respond_to @owner, :get
-      #assert_respond_to @owner, :update
-    #end
+    it "has expected action methods" do
+      @tags.each do |tag|
+        assert_respond_to tag, :get
+        assert_respond_to tag, :delete
+      end
+    end
 
-    #it "has expected attributes" do
-      #assert @owner.attributes[:login]
-      #assert @owner.attributes[:email]
-    #end
+    it "has expected attributes" do
+      @tags.each do |tag|
+        assert tag.attributes[:name]
+        assert tag.attributes[:commit]
+        assert tag.attributes[:message]
+      end
+    end
 
+  end
+
+  describe "values in a dictionary" do
+    before do
+      @dict = @repo.refs.branches
+    end
+
+    it "have correct types" do
+      assert_kind_of PatchboardTests::Branch, @dict.master
+      assert_kind_of PatchboardTests::Branch, @dict.release
+    end
+   
+    it "have expected action methods" do
+      @dict.each do |name, branch|
+        assert_respond_to branch, :get
+        assert_respond_to branch, :delete
+      end
+    end
+
+    it "have expected attributes" do
+      @dict.each do |name, branch|
+        assert branch.attributes[:name]
+        assert branch.attributes[:commit]
+        assert branch.attributes[:message]
+      end
+    end
   end
 
 end

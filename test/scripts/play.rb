@@ -13,7 +13,7 @@ resources = client.resources
 
 
 users = resources.users
-response = users.create :login => "foo-#{rand(1000)}"
+response = users.create :login => "foo-#{rand(100000)}"
 user = response.resource
 pp
 
@@ -23,7 +23,8 @@ question = response.resource
 pp question.question
 
 result = question.answer(:letter => "d").resource
-pp result
+pp result.class
+pp result.correct, result.success
 
 exit
 

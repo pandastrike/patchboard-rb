@@ -50,11 +50,11 @@ class Patchboard
     end
 
     def self.decorate(instance, attributes)
+      # TODO: non destructive decoration
       # TODO: add some sort of validation for the input attributes.
       # Hey, we have a JSON Schema, why not use it?
       if self.schema && (properties = self.schema[:properties])
         properties.each do |key, sub_schema|
-          puts "KEY: #{key}"
           next unless (value = attributes[key])
 
           if mapping = self.api.find_mapping(sub_schema)
@@ -70,29 +70,13 @@ class Patchboard
               attributes[key] = mapping.klass.new value
             end
           else
-
-            case sub_schema[:type]
-            when "string", "number", "integer", "boolean"
-              nil
-            when "array"
-              if item_schema = sub_schema[:items]
-                if mapping = self.api.find_mapping(item_schema)
-                  value.each_with_index do |item, i|
-                    value[i] = mapping.klass.new item
-                  end
-                end
-              end
-            when "object"
-            else
-              raise "cain"
-            end
+            attributes[key] = self.api.decorate(sub_schema, value)
           end
 
         end
       end
       attributes
     end
-
 
     attr_reader :attributes
 

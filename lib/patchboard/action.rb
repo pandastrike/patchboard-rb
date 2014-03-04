@@ -45,13 +45,7 @@ class Patchboard
       if response.status != @status
         raise "Unexpected response status: #{response.status}"
       end
-      if @response_schema
-        if mapping = @api.find_mapping(@response_schema)
-          response.resource = mapping.klass.new response.data
-        else
-          response.resource = response.data
-        end
-      end
+      response.resource = @api.decorate(@response_schema, response.data)
       response
     end
 

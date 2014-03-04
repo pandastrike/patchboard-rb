@@ -29,45 +29,48 @@ class Patchboard
       end
     end
 
+    def decorate(schema, data)
+      unless schema
+        return Hashie::Mash.new(data)
+      end
 
-    def _decorate(schema=nil, data=nil)
-      return unless (schema && data)
-      if ref = schema[:$ref]
-        puts "following ref: #{ref}"
-        ref_schema = @schema_manager.find :ref => ref
-        self.decorate ref_schema, data
+      if mapping = self.find_mapping(schema)
+        # when we have a resource class, instantiate it using the input data.
+        data = mapping.klass.new data
       else
-        if schema[:type] == "array"
-          if schema[:items]
-            data.each_with_index do |item, i|
-              if result = self.decorate(schema[:items], item)
-                data[i] = result
+        # Otherwise traverse the schema in search of subschemas that have
+        # resource classes available.
+        case schema[:type]
+        when "array"
+          # TODO: handle the case where schema.items is an array, which
+          # signifies a tuple.  schema.additionalItems then becomes important.
+          data.map! do |item|
+            self.decorate(schema[:items], item)
+          end
+
+        when "object"
+          if schema[:properties]
+            schema[:properties].each do |key, prop_schema|
+              if value = data[key]
+                data[key] = self.decorate(prop_schema, value)
               end
             end
           end
-        else
-          # not array, so figure out what
-          case schema[:type]
-          when "string", "number", "integer", "boolean"
-            nil
-          else
-            schema[:properties].each do |key, value|
-              if result = self.decorate(value, data[key.to_sym])
-                data[key.to_sym] = result
-              end
+          # TODO: handle schema.patternProperties
+          # TODO: consider alternative to iterating over all keys.
+          if schema[:additionalProperties]
+            data.each do |key, value|
+              next if schema[:properties] && schema[:properties][key]
+              data[key] = self.decorate(schema[:additionalProperties], value)
             end
-            if addprop = schema[:additionalProperties]
-              data.each do |key, value|
-                unless schema[:properties] && schema[:properties][key.to_sym]
-                  data[key] = self.decorate(addprop, value)
-                end
-              end
-            end
-            data
           end
+          data = Hashie::Mash.new data
         end
       end
+      data
     end
+
+
   end
 
   class Mapping
