@@ -1,7 +1,15 @@
+# This test assumes you are running the Patchboard Trivial example in
+# another terminal:
+#
+#   cd ../
+#   git clone git@github.com:automatthew/patchboard-examples.git
+#   cd patchboard-examples/trivial
+#   bin/server.coffee test/data/questions.json
+#
+
 require "patchboard"
 
-module PatchboardTests
-end
+module PatchboardTests; end
 
 Client = Patchboard.discover "http://localhost:1979/", :namespace => PatchboardTests
 
