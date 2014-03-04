@@ -33,6 +33,7 @@ describe "Decoration of response data" do
     it "has expected attributes" do
       [:name, :owner, :refs].each do |key|
         assert @repo.attributes[key], "Missing attribute #{key}"
+        assert @repo.send(key), "Missing attribute #{key}"
       end
     end
 

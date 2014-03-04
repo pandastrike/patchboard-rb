@@ -1,3 +1,15 @@
+# Allows you to determine which methods are defined on a specific class
+# or module
+class Module
+  def local_methods
+    self.methods.select { |m| self.method(m).owner == self }
+  end
+  
+  def local_instance_methods
+    self.instance_methods.select { |m| self.instance_method(m).owner == self }
+  end
+end
+
 gem "http"
 gem "json"
 

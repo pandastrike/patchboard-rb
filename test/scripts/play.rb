@@ -12,6 +12,7 @@ resources = client.resources
 users = resources.users
 response = users.create :login => "foo-#{rand(100000)}"
 user = response.resource
+pp user.class.local_instance_methods
 pp
 
 questions = user.questions(:category => "Science")
