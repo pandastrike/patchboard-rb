@@ -3,12 +3,9 @@ require "http"
 require "json"
 
 require_relative "../../lib/patchboard"
-#def request(verb, uri, options = {})
 
 client = Patchboard.discover "http://localhost:1979/"
-#pp client.resource_classes
 resources = client.resources
-#pp resources
 
 
 
