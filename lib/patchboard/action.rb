@@ -38,25 +38,27 @@ class Patchboard
       @http ||= @patchboard.http
     end
 
-    def request(url, *args)
-      options = self.prepare_request(url, *args)
+    def request(resource, url, *args)
+      options = self.prepare_request(resource, url, *args)
       raw = self.http.request @method, url, options.merge(:response => :object)
       response = Response.new(raw)
       if response.status != @status
         raise "Unexpected response status: #{response.status}"
       end
-      response.resource = @api.decorate(@response_schema, response.data)
-      response
+      out = @api.decorate(resource.context, @response_schema, response.data)
+      out.response = response
+      out
     end
 
-    def prepare_request(url, *args)
+    def prepare_request(resource, url, *args)
+      context = resource.context
       headers = {}.merge(@headers)
       options = {
         :url => url, :method => @method, :headers => headers
       }
 
-      if @auth_scheme && @patchboard.respond_to?(:authorizer)
-        credential = @patchboard.authorizer(@auth_scheme, @name)
+      if @auth_scheme && context.respond_to?(:authorizer)
+        credential = context.authorizer(@auth_scheme, resource, @name)
         headers["Authorization"] = "#{@auth_scheme} #{credential}"
       end
 

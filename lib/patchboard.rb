@@ -55,7 +55,7 @@ class Patchboard
     end
   end
 
-  attr_reader :api, :resources, :resource_classes, :http, :schema_manager
+  attr_reader :api, :resources, :http, :schema_manager
 
   def initialize(api, options={})
     @api = API.new(api)
@@ -69,22 +69,36 @@ class Patchboard
       end
     end
 
-    @resource_classes = {}
     @endpoint_classes = {}
 
     @schema_manager = SchemaManager.new(@api.schemas)
 
     @http = self.class.http
     self.create_classes()
-    @resources = Endpoints.new(@api, @endpoint_classes)
+    @resources = self.spawn({}).resources
+  end
+
+  def spawn(context)
+    self.class::Client.new(context, @api, @endpoint_classes)
+  end
+
+  class Client
+
+    attr_reader :resources, :context
+    def initialize(context, api, klasses)
+      @context = context
+      @resources = Endpoints.new @context, api, klasses
+    end
+
   end
 
   def create_classes
+    klasses = {}
     @api.mappings.each do |name, mapping|
       resource_name = mapping.resource.name.to_sym
       schema = @schema_manager.find :name => resource_name
 
-      klass = @resource_classes[name] ||= begin
+      klass = klasses[name] ||= begin
         resource_def = mapping.resource
         self.create_class(name, resource_def, schema, mapping)
       end
@@ -95,7 +109,7 @@ class Patchboard
   def create_class(resource_name, definition, schema, mapping)
     patchboard = self
 
-    mapping.klass = klass = Class.new(Resource) do |klass|
+    mapping.klass = klass = Class.new(self.class::Resource) do |klass|
       self.assemble(patchboard, definition, schema, mapping)
     end
 
@@ -106,7 +120,6 @@ class Patchboard
     end
     klass
   end
-
 
 
 end

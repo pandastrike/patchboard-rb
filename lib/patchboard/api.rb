@@ -28,14 +28,14 @@ class Patchboard
       end
     end
 
-    def decorate(schema, data)
+    def decorate(context, schema, data)
       unless schema
         return Hashie::Mash.new(data)
       end
 
       if mapping = self.find_mapping(schema)
         # when we have a resource class, instantiate it using the input data.
-        data = mapping.klass.new data
+        data = mapping.klass.new context, data
       else
         # Otherwise traverse the schema in search of subschemas that have
         # resource classes available.
@@ -44,14 +44,14 @@ class Patchboard
           # TODO: handle the case where schema.items is an array, which
           # signifies a tuple.  schema.additionalItems then becomes important.
           data.map! do |item|
-            self.decorate(schema[:items], item)
+            self.decorate(context, schema[:items], item)
           end
 
         when "object"
           if schema[:properties]
             schema[:properties].each do |key, prop_schema|
               if value = data[key]
-                data[key] = self.decorate(prop_schema, value)
+                data[key] = self.decorate(context, prop_schema, value)
               end
             end
           end
@@ -60,7 +60,7 @@ class Patchboard
           if schema[:additionalProperties]
             data.each do |key, value|
               next if schema[:properties] && schema[:properties][key]
-              data[key] = self.decorate(schema[:additionalProperties], value)
+              data[key] = self.decorate(context, schema[:additionalProperties], value)
             end
           end
           data = Hashie::Mash.new data

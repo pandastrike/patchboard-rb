@@ -43,7 +43,7 @@ class Patchboard
         action = Action.new(patchboard, name, action)
 
         define_method name do |*args|
-          action.request @url, *args
+          action.request self, @url, *args
         end
       end
     end
@@ -53,6 +53,7 @@ class Patchboard
       # TODO: add some sort of validation for the input attributes.
       # Hey, we have a JSON Schema, why not use it?
       if self.schema && (properties = self.schema[:properties])
+        context = instance.context
         properties.each do |key, sub_schema|
           next unless (value = attributes[key])
 
@@ -63,13 +64,13 @@ class Patchboard
               instance.define_singleton_method key do |params|
                 params[:url] = value[:url]
                 url = mapping.generate_url(params)
-                mapping.klass.new :url => url
+                mapping.klass.new context, :url => url
               end
             else
-              attributes[key] = mapping.klass.new value
+              attributes[key] = mapping.klass.new context, value
             end
           else
-            attributes[key] = self.api.decorate(sub_schema, value)
+            attributes[key] = self.api.decorate(context, sub_schema, value)
           end
 
         end
@@ -77,11 +78,21 @@ class Patchboard
       attributes
     end
 
-    attr_reader :attributes
+    attr_accessor :response
+    attr_reader :url, :context, :attributes
 
-    def initialize(attributes={})
+    def initialize(context, attributes={})
+      @context = context
       @attributes = self.class.decorate self, Hashie::Mash.new(attributes)
       @url = @attributes[:url]
+    end
+
+    def inspect
+      id = "%x" % (self.object_id << 1)
+      %Q{
+        #<#{self.class}:0x#{id}
+        @url="#{@url}" @context=#{@context}>
+      }.strip
     end
 
     def [](key)
