@@ -1,4 +1,4 @@
-$:.unshift "/Users/matthew/projects/oss/starter/lib"
+#$:.unshift "/Users/matthew/projects/oss/starter/lib"
 require "starter/tasks/gems"
 require "starter/tasks/git"
 

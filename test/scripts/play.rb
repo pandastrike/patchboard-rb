@@ -1,6 +1,4 @@
 require "pp"
-require "http"
-require "json"
 
 require_relative "../../lib/patchboard"
 

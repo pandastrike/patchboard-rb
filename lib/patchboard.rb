@@ -12,9 +12,11 @@ end
 
 gem "http"
 gem "json"
+gem "hashie"
 
 require "http"
 require "json"
+require "hashie"
 
 require_relative "patchboard/api"
 require_relative "patchboard/util"
