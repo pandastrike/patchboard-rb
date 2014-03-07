@@ -55,7 +55,7 @@ class Patchboard
     end
   end
 
-  attr_reader :api, :resources, :http, :schema_manager
+  attr_reader :api, :resources, :http, :schema_manager, :context
 
   def initialize(api, options={}, &block)
     @api = API.new(api)
@@ -76,7 +76,9 @@ class Patchboard
 
     @http = self.class.http
     self.create_classes()
-    @resources = self.spawn({}).resources
+    client = self.spawn({})
+    @resources = client.resources
+    @context = client.context
   end
 
   def spawn(context=nil)
