@@ -39,7 +39,7 @@ class Patchboard
     @http ||= HTTP.with_headers "User-Agent" => "patchboard-rb v0.1.0"
   end
 
-  def self.discover(url, options={})
+  def self.discover(url, options={}, &block)
     begin
       response = self.http.request "GET", url,
         :response => :object,
@@ -47,7 +47,7 @@ class Patchboard
           "Accept" => "application/json"
         }
       data = JSON.parse(response.body, :symbolize_names => true)
-      self.new(data, options)
+      self.new(data, options, &block)
     rescue JSON::ParserError => error
       raise "Unparseable API description: #{error}"
     rescue Errno::ECONNREFUSED => error
@@ -57,9 +57,10 @@ class Patchboard
 
   attr_reader :api, :resources, :http, :schema_manager
 
-  def initialize(api, options={})
+  def initialize(api, options={}, &block)
     @api = API.new(api)
     @options = options
+    @context_creator = block
 
     if options[:namespace]
       if options[:namespace].is_a? Module
@@ -78,7 +79,8 @@ class Patchboard
     @resources = self.spawn({}).resources
   end
 
-  def spawn(context)
+  def spawn(context=nil)
+    context ||= @context_creator.call
     self.class::Client.new(context, @api, @endpoint_classes)
   end
 

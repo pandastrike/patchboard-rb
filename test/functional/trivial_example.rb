@@ -23,7 +23,7 @@ describe "Using the Trivia Game API" do
 
   describe "A user resource created with resources.users" do
     let(:user) do
-      @users.create(:login => "foo-#{rand(100000)}").resource
+      @users.create(:login => "foo-#{rand(100000)}")
     end
 
     it "has correct type" do
@@ -37,7 +37,7 @@ describe "Using the Trivia Game API" do
 
     describe "A question asked" do
       let(:question) do
-        user.questions(:category => "Science").ask().resource
+        user.questions(:category => "Science").ask()
       end
 
       it "has correct type" do
@@ -49,7 +49,7 @@ describe "Using the Trivia Game API" do
       end
 
       it "can be answered" do
-        result = question.answer(:letter => "d").resource
+        result = question.answer(:letter => "d")
         assert_equal true, result.success
         assert_equal "d", result.correct
       end
