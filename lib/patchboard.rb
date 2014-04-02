@@ -18,6 +18,17 @@ require "http"
 require "json"
 require "hashie"
 
+module Hashie
+  class Mash
+
+    # monkey patch to make #values_at work with symbols
+    def values_at(*args)
+      super *args.map {|arg| convert_key(arg)}
+    end
+
+  end
+end
+
 require_relative "patchboard/api"
 require_relative "patchboard/util"
 require_relative "patchboard/resource"
