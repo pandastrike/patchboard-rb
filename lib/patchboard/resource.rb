@@ -105,6 +105,19 @@ class Patchboard
 
 
     def curl
+      raise "Unimplemented"
+    end
+
+    def values_at(*keys)
+      self.attributes.values_at(*keys)
+    end
+
+    def to_hash
+      self.attributes
+    end
+
+    def to_json(*a)
+      self.to_hash.to_json(*a)
     end
   end
 

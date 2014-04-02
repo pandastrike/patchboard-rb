@@ -28,6 +28,14 @@ class Patchboard
       end
     end
 
+    class ArrayResource < Array
+      attr_accessor :response
+    end
+
+    class HashResource < Hash
+      attr_accessor :response
+    end
+
     def decorate(context, schema, data)
       unless schema
         return Hashie::Mash.new(data)
@@ -43,10 +51,10 @@ class Patchboard
         when "array"
           # TODO: handle the case where schema.items is an array, which
           # signifies a tuple.  schema.additionalItems then becomes important.
-          data.map! do |item|
+          array = data.map! do |item|
             self.decorate(context, schema[:items], item)
           end
-
+          data = ArrayResource.new(array)
         when "object"
           if schema[:properties]
             schema[:properties].each do |key, prop_schema|
@@ -64,11 +72,14 @@ class Patchboard
             end
           end
           data = Hashie::Mash.new data
+        else
+          if data.is_a? Hash
+            data = Hashie::Mash.new data
+          end
         end
       end
       data
     end
-
 
   end
 
