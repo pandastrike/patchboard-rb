@@ -23,6 +23,7 @@ class Patchboard
     end
 
     def register_schema(id, schema)
+      # FIXME:  extensions and refs are not imported.
       schema[:id] = id
       @ids[id] = schema
       name = id.split("#")[1].to_sym
