@@ -13,9 +13,9 @@ Gem::Specification.new do |s|
   s.license = "MIT"
   s.require_path = "lib"
 
-  s.add_dependency("json", "~> 1.8.1")
-  s.add_dependency("http", "~> 0.5.0")
-  s.add_dependency("hashie", "~> 2.0.5")
+  s.add_dependency("json", "~> 1.8")
+  s.add_dependency("http", "~> 0.5")
+  s.add_dependency("hashie", "~> 2.0")
 
-  s.add_development_dependency("minitest-reporters", "~> 1.0.2")
+  s.add_development_dependency("minitest-reporters", "~> 1.0")
 end
