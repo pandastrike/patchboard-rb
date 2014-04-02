@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "patchboard"
-  s.version = "0.4.0"
+  s.version = "0.4.1"
   s.authors = ["Matthew King"]
   s.email = "automatthew@gmail.com"
   s.homepage = "https://github.com/pandastrike/patchboard-rb"
