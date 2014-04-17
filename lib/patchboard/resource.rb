@@ -61,7 +61,7 @@ class Patchboard
             if mapping.query
               # TODO: find a way to define this at runtime, not once
               # for every instance.
-              instance.define_singleton_method key do |params|
+              instance.define_singleton_method key do |params={}|
                 params[:url] = value[:url]
                 url = mapping.generate_url(params)
                 mapping.klass.new context, :url => url
