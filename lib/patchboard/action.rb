@@ -44,7 +44,7 @@ class Patchboard
       response = Response.new(raw)
       if response.status != @status
         # TODO: custom exception classes, express response body in such.
-        raise "Unexpected response status: #{response.status}"
+        raise "Unexpected response status: #{response.status} - #{response.body}"
       end
       out = @api.decorate(resource.context, @response_schema, response.data)
       out.response = response
