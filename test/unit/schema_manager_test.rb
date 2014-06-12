@@ -1,3 +1,4 @@
+require_relative "../setup"
 require "patchboard/schema_manager"
 
 def media_type(name)
@@ -5,7 +6,7 @@ def media_type(name)
 end
 
 api = PatchboardTests.api
-schema_manager = Patchboard::SchemaManager.new(*api.schemas)
+schema_manager = Patchboard::SchemaManager.new(api.schemas)
 #pp schema_manager
 
 

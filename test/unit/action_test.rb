@@ -1,4 +1,4 @@
-require "pp"
+require_relative "../setup"
 require "json"
 require "patchboard/schema_manager"
 require "patchboard/action"
@@ -8,14 +8,14 @@ def media_type(name)
 end
 
 api = PatchboardTests.api
-schema_manager = Patchboard::SchemaManager.new(*api.schemas)
+schema_manager = Patchboard::SchemaManager.new(api.schemas)
 
 
-Client = Struct.new(:schema_manager, :http)
-HTTP = Struct.new(:with_headers)
-http = HTTP.new
-#http = HTTP.with_headers "User-Agent" => "patchboard-rb v0.1.0"
-client = Client.new schema_manager, http
+MockClient = Struct.new(:schema_manager, :http, :api)
+Resource = Struct.new(:context)
+MockHTTP = Struct.new(:with_headers)
+http = MockHTTP.new
+client = MockClient.new schema_manager, http
 
 describe "Patchboard::Action with request body required" do
 
@@ -67,7 +67,7 @@ describe "Patchboard::Action with request body required" do
 
     it "works" do
       url, content = "http://api.thingy.com/", {:email => "x@y.com"}
-      options = @action.prepare_request url, content
+      options = @action.prepare_request(Resource.new, url, content)
       assert_equal "http://api.thingy.com/", options[:url]
       assert options[:headers]
       assert_equal media_type("user"), options[:headers]["Content-Type"]

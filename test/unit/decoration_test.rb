@@ -1,3 +1,4 @@
+require_relative "../setup"
 require "pp"
 require "json"
 require "patchboard"
@@ -15,7 +16,7 @@ describe "Decoration of response data" do
   before do
     mapping = Client.api.mappings[:repository]
     @data = JSON.parse(File.read("test/data/dectest.json"), :symbolize_names => true)
-    @repo = mapping.klass.new(@data)
+    @repo = mapping.klass.new(context={}, @data)
   end
 
   describe "top level object" do
