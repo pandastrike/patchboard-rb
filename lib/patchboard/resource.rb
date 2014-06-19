@@ -70,10 +70,9 @@ class Patchboard
       # TODO: add some sort of validation for the input attributes.
       # Hey, we have a JSON Schema, why not use it?
       if self.schema && (properties = self.schema[:properties])
-        context = instance.context
         properties.each do |key, sub_schema|
           if (value = attributes[key]) && !self.api.find_mapping(sub_schema)
-            attributes[key] = self.api.decorate(context, sub_schema, value)
+            attributes[key] = self.api.decorate(instance.context, sub_schema, value)
           end
         end
       end
