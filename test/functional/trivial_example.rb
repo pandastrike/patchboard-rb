@@ -7,7 +7,7 @@
 #   bin/server.coffee test/data/questions.json
 #
 
-require "patchboard"
+require_relative "setup"
 
 module PatchboardTests; end
 

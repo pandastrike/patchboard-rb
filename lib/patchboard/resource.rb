@@ -19,11 +19,28 @@ class Patchboard
 
       if schema && schema[:properties]
         schema[:properties].each do |name, definition|
-          define_method name do
-            @attributes[name]
+
+          if property_mapping = self.api.find_mapping(definition)
+            if property_mapping.query
+              define_method name do |params={}|
+                params[:url] = @attributes[name][:url]
+                url = property_mapping.generate_url(params)
+                property_mapping.klass.new context, :url => url
+              end
+            else
+              define_method name do
+                property_mapping.klass.new self.context, @attributes[name]
+              end
+            end
+          else
+            define_method name do
+              @attributes[name]
+            end
           end
+
         end
       end
+
 
       if schema && schema[:additionalProperties] != false
         define_method :method_missing do |name, *args, &block|
@@ -55,24 +72,9 @@ class Patchboard
       if self.schema && (properties = self.schema[:properties])
         context = instance.context
         properties.each do |key, sub_schema|
-          next unless (value = attributes[key])
-
-          if mapping = self.api.find_mapping(sub_schema)
-            if mapping.query
-              # TODO: find a way to define this at runtime, not once
-              # for every instance.
-              instance.define_singleton_method key do |params={}|
-                params[:url] = value[:url]
-                url = mapping.generate_url(params)
-                mapping.klass.new context, :url => url
-              end
-            else
-              attributes[key] = mapping.klass.new context, value
-            end
-          else
+          if (value = attributes[key]) && !self.api.find_mapping(sub_schema)
             attributes[key] = self.api.decorate(context, sub_schema, value)
           end
-
         end
       end
       attributes

@@ -1,4 +1,4 @@
-require_relative "../setup"
+require_relative "setup"
 require "pp"
 require "json"
 require "patchboard"
@@ -62,8 +62,8 @@ describe "Decoration of response data" do
     end
 
     it "has expected attributes" do
-      assert @owner.attributes[:login]
-      assert @owner.attributes[:email]
+      assert @owner.attributes[:login], "Missing :login"
+      assert @owner.attributes[:email], "Missing :email"
     end
 
   end
