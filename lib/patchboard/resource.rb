@@ -25,7 +25,7 @@ class Patchboard
               define_method name do |params={}|
                 params[:url] = @attributes[name][:url]
                 url = property_mapping.generate_url(params)
-                property_mapping.klass.new context, :url => url
+                property_mapping.klass.new self.context, :url => url
               end
             else
               define_method name do
@@ -42,12 +42,19 @@ class Patchboard
       end
 
 
+      # When an additionalProperties schema is defined, the resource can
+      # contain top-level attributes that should obey that schema.
       if schema && schema[:additionalProperties] != false
-        define_method :method_missing do |name, *args, &block|
-          if args.size == 0
+
+        if (add_mapping = self.api.find_mapping(schema)) && (add_mapping.query)
+          define_method :method_missing do |name, params|
+            params[:url] = @attributes[name][:url]
+            url = add_mapping.generate_url(params)
+            add_mapping.klass.new self.context, :url => url
+          end
+        else
+          define_method :method_missing do |name|
             @attributes[name.to_sym]
-          else
-            super(name, *args, &block)
           end
         end
       end
