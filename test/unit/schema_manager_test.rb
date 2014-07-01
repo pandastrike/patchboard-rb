@@ -1,4 +1,4 @@
-require_relative "../setup"
+require_relative "setup"
 require "patchboard/schema_manager"
 
 def media_type(name)
