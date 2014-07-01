@@ -1,6 +1,7 @@
 require "starter/tasks/gems"
 require "starter/tasks/git"
 
+task "setup" => %w[ test_api ]
 
 task "test" => %w[ test:unit ]
 
