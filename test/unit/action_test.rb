@@ -1,4 +1,4 @@
-require_relative "../setup"
+require_relative "setup"
 require "json"
 require "patchboard/schema_manager"
 require "patchboard/action"
@@ -13,8 +13,7 @@ schema_manager = Patchboard::SchemaManager.new(api.schemas)
 
 MockClient = Struct.new(:schema_manager, :http, :api)
 Resource = Struct.new(:context)
-MockHTTP = Struct.new(:with_headers)
-http = MockHTTP.new
+http = Minitest::Mock.new
 client = MockClient.new schema_manager, http
 
 describe "Patchboard::Action with request body required" do
@@ -73,6 +72,20 @@ describe "Patchboard::Action with request body required" do
       assert_equal media_type("user"), options[:headers]["Content-Type"]
       assert_equal media_type("user"), options[:headers]["Accept"]
       assert_equal content.to_json, options[:body]
+    end
+
+  end
+
+  describe "receiving an error from the API" do
+    before do
+      http.expect :request, Hashie::Mash.new({ status: 403, body: {}, headers: {} }), [Object, Object, Object]
+    end
+
+    it "raises the correct error type" do
+      url, content = "http://api.thingy.com/", {:email => "x@y.com"}
+      assert_raises Patchboard::Action::ResponseError do
+        @action.request(Resource.new, url, content)
+      end
     end
 
   end
