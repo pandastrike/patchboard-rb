@@ -43,8 +43,7 @@ class Patchboard
       raw = self.http.request @method, url, options.merge(:response => :object)
       response = Response.new(raw)
       if response.status != @status
-        # TODO: custom exception classes, express response body in such.
-        raise "Unexpected response status: #{response.status} - #{response.body}"
+        raise ResponseError.new(response.status, response.body), "Unexpected response status: #{response.status} - #{response.body}"
       end
       out = @api.decorate(resource.context, @response_schema, response.data)
       out.response = response
@@ -100,7 +99,15 @@ class Patchboard
     end
 
 
+    class ResponseError < StandardError
+      attr_reader :status
+      attr_reader :body
 
+      def initialize(status, body)
+        @status = status
+        @body = body
+      end
+    end
 
   end
 
