@@ -17,6 +17,7 @@ class Patchboard
         schema
       end
 
+      # FIXME: break this out into multiple methods.
       if schema && schema[:properties]
         schema[:properties].each do |name, definition|
 
