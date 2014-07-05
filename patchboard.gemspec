@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
   s.add_dependency("json", "~> 1.8")
   s.add_dependency("http", "~> 0.5")
   s.add_dependency("hashie", "~> 2.0")
+  s.add_dependency("json-pointer", "~> 0.0.1")
 
   s.add_development_dependency("minitest-reporters", "~> 1.0")
 end

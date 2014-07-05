@@ -20,11 +20,22 @@ describe "SchemaManager" do
     assert schema[:properties], "Schema is missing properties"
   end
 
-  #it "can find schemas by reference" do
-    #schema = schema_manager.find :ref => "urn:gh-knockoff#user"
-    #assert schema
-  #end
 
+  it "can find schemas by JSON reference" do
+    jsck = JSCK.new(api.schemas)
+
+    ref = "urn:gh-knockoff#/definitions/user/properties/login"
+    pp jsck.resolve(ref)
+
+    #uri = "https://raw.githubusercontent.com/patchboard/patchboard-api/master/test_api.json"
+    #ref = "#{uri}#/schema/definitions/user"
+
+    #pp jsck.reference(ref)
+    #ref = "#{uri}#/schema/definitions/repository"
+    #jsck.reference(ref)
+  end
 
 end
+
+
 
