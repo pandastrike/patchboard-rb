@@ -13,18 +13,12 @@ module PatchboardTests; end
 
 Client = Patchboard.discover "http://localhost:1979/", :namespace => PatchboardTests
 
+user = Client.resources.users.create(:login => "foo-#{rand(100000)}")
 
 describe "Using the Trivia Game API" do
 
-  before do
-    @resources = Client.resources
-    @users = @resources.users
-  end
 
   describe "A user resource created with resources.users" do
-    let(:user) do
-      @users.create(:login => "foo-#{rand(100000)}")
-    end
 
     it "has correct type" do
       assert_kind_of PatchboardTests::User, user

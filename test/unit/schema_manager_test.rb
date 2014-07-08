@@ -24,15 +24,10 @@ describe "SchemaManager" do
   it "can find schemas by JSON reference" do
     jsck = JSCK.new(api.schemas)
 
-    ref = "urn:gh-knockoff#/definitions/user/properties/login"
-    pp jsck.resolve(ref)
-
-    #uri = "https://raw.githubusercontent.com/patchboard/patchboard-api/master/test_api.json"
-    #ref = "#{uri}#/schema/definitions/user"
-
-    #pp jsck.reference(ref)
-    #ref = "#{uri}#/schema/definitions/repository"
-    #jsck.reference(ref)
+    ref = "urn:gh-knockoff#/definitions/repository_list/items/properties/refs"
+    schema = jsck.resolve(ref)
+    assert_equal schema[:type], "object"
+    assert_equal schema[:properties].keys.sort, [:branches, :main, :tags]
   end
 
 end

@@ -29,6 +29,7 @@ module Hashie
   end
 end
 
+require_relative "jsck"
 require_relative "patchboard/api"
 require_relative "patchboard/util"
 require_relative "patchboard/resource"
@@ -66,10 +67,11 @@ class Patchboard
     end
   end
 
-  attr_reader :api, :resources, :http, :schema_manager, :context
+  attr_reader :api, :resources, :http, :schema_manager, :context,
+    :endpoint_classes
 
   def initialize(api, options={}, &block)
-    @api = API.new(api)
+    @api = API.new(self, api)
     @options = options
     @context_creator = block
 
@@ -83,7 +85,7 @@ class Patchboard
 
     @endpoint_classes = {}
 
-    @schema_manager = SchemaManager.new(@api.schemas)
+    @schema_manager = JSCK.new(@api.schemas)
 
     @http = self.class.http
     self.create_classes()
@@ -110,9 +112,11 @@ class Patchboard
   def create_classes
     klasses = {}
     @api.mappings.each do |name, mapping|
-      resource_name = mapping.resource.name.to_sym
-      schema = @schema_manager.find :name => resource_name
 
+      schema_name = mapping.resource.name.to_sym
+      schema = @schema_manager.find :name => schema_name
+
+      # memoize to prevent creating the class more than once
       klass = klasses[name] ||= begin
         resource_def = mapping.resource
         self.create_class(name, resource_def, schema, mapping)

@@ -4,7 +4,8 @@ class Patchboard
   class API
     attr_reader :mappings, :resources, :schemas, :service_url
 
-    def initialize(definition)
+    def initialize(patchboard, definition)
+      @patchboard = patchboard
 
       @service_url = definition[:service_url]
       @resources = Hashie::Mash.new definition[:resources]
@@ -28,6 +29,14 @@ class Patchboard
       end
     end
 
+    def class_for(schema)
+      parent = schema.parent
+      if parent && parent[:id] == "urn:patchboard#resource"
+        name = schema[:id].split("#").last.to_sym
+        @patchboard.endpoint_classes[name]
+      end
+    end
+
     class ArrayResource < Array
       attr_accessor :response
     end
@@ -41,9 +50,9 @@ class Patchboard
         return Hashie::Mash.new(data)
       end
 
-      if mapping = self.find_mapping(schema)
-        # when we have a resource class, instantiate it using the input data.
-        data = mapping.klass.new context, data
+      # Determine if the schema corresponds to a resource.
+      if klass = self.class_for(schema)
+        data = klass.new context, data
       else
         # Otherwise traverse the schema in search of subschemas that have
         # resource classes available.

@@ -1,12 +1,60 @@
 class JSCK
 
+  class Context
+    # TODO: do we allow changing scope?
+
+    attr_reader :manager, :pointer
+    def initialize(*args)
+      @manager, @scope, @pointer = args
+    end
+
+    def resolve(ref)
+      case ref
+      when /^#\//
+        # fragment with a JSON pointer
+        @manager.resolve "#{@scope}#{ref}"
+      when /^#[^\/]/
+        # fragment with a defined id, not a JSON pointer
+        @manager.resolve_id "#{@scope}#{ref}"
+      else
+        # global
+        @manager.resolve ref
+      end
+    end
+
+    def register_id(*args)
+      @manager.register_id(*args)
+    end
+
+    def register_name(*args)
+      @manager.register_name(*args)
+    end
+
+    def register_media_type(*args)
+      @manager.register_media_type(*args)
+    end
+
+    def child(token)
+      Context.new(@manager, @scope, "#{@pointer}/#{token}")
+    end
+
+    def id(token)
+      "#{@scope}#{token}"
+    end
+
+  end
+
+  # Containers handle the objects within a JSON Schema that do not
+  # themselves define schemas.
   class Container < Hash
 
     def initialize(context, data)
-      @context = context
+      # Hash.new's argument is not, as you might expect from Array.new,
+      # a hash that will be set as the contained data.  Nope, it's an item
+      # that will be used as the default value for key accesses.
+      # Bless the stdlib; bless its little heart.
       self.replace(data)
-      @uri = self[:id]
-      @ids = {}
+      @context = context
     end
 
     def assemble
@@ -27,73 +75,46 @@ class JSCK
 
   end
 
-  # Top level schema document; expected to have a 'definitions' field.
+  # Top level schema Container; expected to have a 'definitions' field.
   # Not expected to define any schema itself.
-  class Top < Container
+  class TopSchema < Container
 
     def initialize(manager, data)
       @manager = manager
       scope = data[:id]
-      pointer = "#{data}/"
+      pointer = "#{scope}#"
       @context = Context.new(@manager, scope, pointer)
 
       super(@context, data)
+
       # `definitions` is the conventional place to put schemas,
       # so we'll define fragment IDs by default where they are
       # not explicitly specified.
       self[:definitions].each do |name, schema|
-        # `definitions` is the conventional place to put schemas,
-        # so we'll define fragment IDs by default where they are
-        # not explicitly specified.
-        id = schema[:id] || [@uri, name].join("")
-        @context.register_id(id, schema)
+        # FIXME: this registers the Hashes, not the Schemas
+
+        pointer = @context.child("definitions").child(name).pointer
+
+        @context.register_id(@context.id("##{name}"), pointer)
+
+        #@context.register_id(@context.id("##{name}"), schema)
+        @context.register_name(name, schema)
       end
     end
 
   end
 
-  class Context
-    # TODO: do we allow changing scope?
-
-    def initialize(*args)
-      @manager, @scope, @pointer = args
-    end
-
-    def resolve(ref)
-      case ref
-      when /^#\//
-        # fragment with a JSON pointer
-        @manager.resolve "#{@scope}#{ref}"
-      when /^#[^\/]/
-        # fragment with a defined id, not a JSON pointer
-        @manager.find_id "#{@scope}#{ref}"
-      else
-        # global
-        @manager.resolve ref
-      end
-    end
-
-    def register_id(*args)
-      @manager.register_id(*args)
-    end
-
-    def register_media_type(*args)
-      @manager.register_media_type(*args)
-    end
-
-    def child(token)
-      Context.new(@manager, @scope, "#{@pointer}/#{token}")
-    end
-
-  end
 
   class Schema < Hash
 
+    attr_reader :parent
     def initialize(context, data)
       @context = context
       self.replace(data)
-      @uri = self[:id]
-      @ids = {}
+      id = self[:id]
+      if id && id.index("#") == 0
+        self[:id] = @context.id(id)
+      end
     end
 
     def assemble
@@ -108,6 +129,7 @@ class JSCK
       end
 
       if self[:extends]
+        # FIXME: JSON Schema allows this value to be an array.
         parent = self.delete(:extends)
         if ref = parent[:$ref]
           unless parent = @context.resolve(ref)
@@ -116,6 +138,7 @@ class JSCK
         end
         # TODO consider accumulating lambdas to do this work lazily.
         extend_schema(parent, self)
+        @parent = parent
       end
 
       if properties = self[:properties]
@@ -150,7 +173,14 @@ class JSCK
         unless [:mediaType].include?(key)
           # FIXME: this should be merging properties, items, etc.
           # look for deep merge helpers.
-          child[key] ||= value
+          case child[key]
+          when Hash
+            value.each do |k, v|
+              child[key][k] ||= v
+            end
+          else
+            child[key] ||= value
+          end
         end
       end
     end
