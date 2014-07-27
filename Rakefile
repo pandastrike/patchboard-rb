@@ -1,4 +1,5 @@
 require "starter/tasks/gems"
+require "starter/tasks/gems/release"
 require "starter/tasks/git"
 
 task "setup" => %w[ test_api ]
