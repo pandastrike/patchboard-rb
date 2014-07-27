@@ -100,7 +100,7 @@ class Patchboard
       id = "%x" % (self.object_id << 1)
       %Q{
         #<#{self.class}:0x#{id}
-        @url="#{@url}" @context=#{@context}>
+        @url="#{@url}">
       }.strip
     end
 

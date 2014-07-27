@@ -47,38 +47,37 @@ class Patchboard
       else
         # Otherwise traverse the schema in search of subschemas that have
         # resource classes available.
-        case schema[:type]
-        when "array"
+
+        if schema[:items]
           # TODO: handle the case where schema.items is an array, which
           # signifies a tuple.  schema.additionalItems then becomes important.
           array = data.map! do |item|
             self.decorate(context, schema[:items], item)
           end
           data = ArrayResource.new(array)
-        when "object"
-          if schema[:properties]
-            schema[:properties].each do |key, prop_schema|
-              if value = data[key]
-                data[key] = self.decorate(context, prop_schema, value)
-              end
+        end
+
+        if schema[:properties]
+          schema[:properties].each do |key, prop_schema|
+            if value = data[key]
+              data[key] = self.decorate(context, prop_schema, value)
             end
-          end
-          # TODO: handle schema.patternProperties
-          # TODO: consider alternative to iterating over all keys.
-          if schema[:additionalProperties]
-            data.each do |key, value|
-              next if schema[:properties] && schema[:properties][key]
-              data[key] = self.decorate(context, schema[:additionalProperties], value)
-            end
-          end
-          data = Hashie::Mash.new data
-        else
-          if data.is_a? Hash
-            data = Hashie::Mash.new data
           end
         end
+
+        if schema[:additionalProperties]
+          data.each do |key, value|
+            next if schema[:properties] && schema[:properties][key]
+            data[key] = self.decorate(context, schema[:additionalProperties], value)
+          end
+        end
+
+        if data.is_a? Hash
+          data = Hashie::Mash.new data
+        end
+        data
       end
-      data
+
     end
 
   end
