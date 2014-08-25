@@ -9,14 +9,27 @@ class Patchboard
       ## The Basic scheme has one param, realm
       # %q[Custom key="otp.fBvQqSSlsNzJbqZcHKsylg", smurf="blue", Basic realm="foo"]
 
+      WWWAuthRegex = /
+        # keys are not quoted
+        ([^\s,]+)
+        =
+
+        # value might be quoted
+        "?
+          # the value currently may not contain whitespace
+          ([^\s,"]+)
+        "?
+      /x # the x flag means whitespace within the Regex definition is ignored
+
       def parse_www_auth(string)
         parsed = {}
+        # FIXME:  This assumes that no quoted strings have spaces within.
         tokens = string.split(" ")
         name = tokens.shift
         parsed[name] = {}
         while token = tokens.shift
           # Now I have two problems
-          if md = /([^\s,]+)="?([^\s,"]+)"?/.match(token)
+          if md = WWWAuthRegex.match(token)
             full, key, value = md.to_a
             parsed[name][key] = value
           else
