@@ -4,7 +4,10 @@ class Patchboard
     module Headers
       module_function
 
-      %q[Gem-OOB-OTP key="otp.fBvQqSSlsNzJbqZcHKsylg", smurf="blue", Basic realm="foo"]
+      ## This example Authorization value has two schemes:  Custom and Basic
+      ## The Custom scheme has two params, key and smurf
+      ## The Basic scheme has one param, realm
+      # %q[Custom key="otp.fBvQqSSlsNzJbqZcHKsylg", smurf="blue", Basic realm="foo"]
 
       def parse_www_auth(string)
         parsed = {}
