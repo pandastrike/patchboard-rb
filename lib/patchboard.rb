@@ -94,15 +94,20 @@ class Patchboard
 
   def spawn(context=nil)
     context ||= @context_creator.call
-    self.class::Client.new(context, @api, @endpoint_classes)
+    self.class::Client.new(self, context, @api, @endpoint_classes)
   end
 
   class Client
 
     attr_reader :resources, :context
-    def initialize(context, api, klasses)
+    def initialize(main, context, api, klasses)
+      @main = main
       @context = context
       @resources = Endpoints.new @context, api, klasses
+    end
+
+    def spawn(context=nil)
+      @main.spawn(context)
     end
 
   end

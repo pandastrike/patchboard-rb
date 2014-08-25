@@ -14,13 +14,14 @@ class Patchboard
       @method = definition[:method]
 
 
-      @headers = {
-      }
+      @headers = {}
 
       request, response = definition[:request], definition[:response]
 
       if request
-        @auth_scheme = request[:authorization]
+        if schemes = request[:authorization]
+          @auth_schemes = schemes.is_a?(String) ? [schemes] : schemes
+        end
         if request[:type]
           @headers["Content-Type"] = request[:type]
           @request_schema = @schema_manager.find :media_type => request[:type]
@@ -43,7 +44,8 @@ class Patchboard
       raw = self.http.request @method, url, options.merge(:response => :object)
       response = Response.new(raw)
       if response.status != @status
-        raise ResponseError.new(response.status, response.body), "Unexpected response status: #{response.status} - #{response.body}"
+        raise ResponseError.new(response),
+          "Unexpected response status: #{response.status} - #{response.body}"
       end
       out = @api.decorate(resource.context, @response_schema, response.data)
       out.response = response
@@ -57,9 +59,10 @@ class Patchboard
         :url => url, :method => @method, :headers => headers
       }
 
-      if @auth_scheme && context.respond_to?(:authorizer)
-        credential = context.authorizer(@auth_scheme, resource, @name)
-        headers["Authorization"] = "#{@auth_scheme} #{credential}"
+      if @auth_schemes && context.respond_to?(:authorizer)
+        scheme, credential = context.authorizer(@auth_schemes, resource, @name)
+
+        headers["Authorization"] = "#{scheme} #{credential}"
       end
 
       input_options = self.process_args(args)
@@ -100,13 +103,16 @@ class Patchboard
 
 
     class ResponseError < StandardError
-      attr_reader :status
-      attr_reader :body
 
-      def initialize(status, body)
-        @status = status
-        @body = body
+      attr_reader :response, :status, :body, :headers
+
+      def initialize(response)
+        @response = response
+        @status = @response.status
+        @body = @response.body
+        @headers = @response.headers
       end
+
     end
 
   end

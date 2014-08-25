@@ -1,13 +1,49 @@
 class Patchboard
   class Response
 
+    module Headers
+      module_function
+
+      %q[Gem-OOB-OTP key="otp.fBvQqSSlsNzJbqZcHKsylg", smurf="blue", Basic realm="foo"]
+
+      def parse_www_auth(string)
+        parsed = {}
+        tokens = string.split(" ")
+        name = tokens.shift
+        parsed[name] = {}
+        while token = tokens.shift
+          # Now I have two problems
+          if md = /([^\s,]+)="?([^\s,"]+)"?/.match(token)
+            full, key, value = md.to_a
+            parsed[name][key] = value
+          else
+            name = token
+            parsed[name] = {}
+          end
+        end
+        parsed
+      end
+
+    end
+
     attr_accessor :resource
-    attr_reader :raw, :data
+    attr_reader :raw, :data, :parsed_headers
     def initialize(raw)
       @raw = raw
       if @raw.headers["Content-Type"]
         if @raw.headers["Content-Type"] =~ %r{application/.*json}
           @data = JSON.parse @raw.body, :symbolize_names => true
+        end
+      end
+      @parsed_headers = {}
+      parse_headers
+    end
+
+    def parse_headers
+      @raw.headers.each do |name, string|
+        case name
+        when /www-authenticate/i
+          @parsed_headers["WWW-Authenticate"] = Headers.parse_www_auth(string)
         end
       end
     end
