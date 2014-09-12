@@ -4,9 +4,12 @@
 
 We provide Bundler support as a courtesy:
 
-    gem install bundler && bundle && rake test
+    gem install bundler && bundle && bundle exec rake test
 
-However, we're not huge fans of Bundler, and prefer a simpler approach:
+However, internally, we mostly use this:
 
     gem install rake && gem install starter && rake gem:deps && rake test
+
+Although it's a little more to learn, in terms of the actual code, it's less
+complicated.
 
