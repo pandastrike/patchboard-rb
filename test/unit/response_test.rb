@@ -36,6 +36,12 @@ describe "Patchboard::Response::Headers" do
       # FIXME: how to get the string right
     end
 
+    it "should handle parameter value of only quotes" do
+      h = %q[Lamp door="    "]
+      res = Patchboard::Response::Headers.parse_www_auth(h)
+      assert_equal "    ", res["Lamp"]["door"]
+    end
+
   end
 
   describe "parse invalid headers" do
@@ -55,11 +61,22 @@ describe "Patchboard::Response::Headers" do
     end
 
     # FIXME
+    it "should handle invalid scheme format" do
+      h = %q[southamerica="brazil", northamerica="canada"]
+      res = Patchboard::Response::Headers.parse_www_auth(h)
+    end
+
+    # FIXME
     it "should handle scheme with empty string parameter values" do
       h = %q[Amazon product=""]
       res = Patchboard::Response::Headers.parse_www_auth(h)
-      pp res
       assert_equal ({"Amazon" => {}}), res
+    end
+
+    # FIXME: ignores City schema, treats losangeles as a part of Street
+    it "should handle lack of space delimiting new schema" do
+      h = %q[Street lampson="avenue",City losangeles="metropolitan"]
+      res = Patchboard::Response::Headers.parse_www_auth(h)
     end
 
     # FIXME
