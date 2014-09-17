@@ -2,6 +2,7 @@ class Patchboard
   class Response
 
     module Headers
+
       module_function
 
       ## This example Authorization value has two schemes:  Custom and Basic
@@ -25,6 +26,9 @@ class Patchboard
         parsed = {}
         # FIXME:  This assumes that no quoted strings have spaces within.
         tokens = string.split(" ")
+        if tokens.length <= 1
+          raise_auth_exception "challenge contains no spaces"
+        end
         name = tokens.shift
         parsed[name] = {}
         while token = tokens.shift
@@ -40,7 +44,12 @@ class Patchboard
         parsed
       end
 
+      def raise_auth_exception(error)
+        raise "invalid auth challenge syntax: #{error}"
+      end
+
     end
+
 
     attr_accessor :resource
     attr_reader :raw, :data, :parsed_headers

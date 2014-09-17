@@ -32,6 +32,7 @@ describe "Patchboard::Response::Headers" do
     it "should handle one escaped quotes in parameter value" do
       h = %q[Cheats shark="there is no \"cow level"]
       res = Patchboard::Response::Headers.parse_www_auth(h)
+      pp res
       assert_equal "there is no \\ cow level", res["Cheats"]["shark"]
       # FIXME: how to get the string right
     end
@@ -61,7 +62,7 @@ describe "Patchboard::Response::Headers" do
     end
 
     # FIXME
-    it "should handle invalid scheme format" do
+    it "should handle invalid challenge with no scheme" do
       h = %q[southamerica="brazil", northamerica="canada"]
       res = Patchboard::Response::Headers.parse_www_auth(h)
     end
