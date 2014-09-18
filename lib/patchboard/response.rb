@@ -26,9 +26,7 @@ class Patchboard
         parsed = {}
         # FIXME:  This assumes that no quoted strings have spaces within.
         tokens = string.split(" ")
-        if tokens.length <= 1
-          raise_auth_exception "challenge contains no spaces"
-        end
+        check_no_spaces tokens
         name = tokens.shift
         parsed[name] = {}
         while token = tokens.shift
@@ -46,6 +44,12 @@ class Patchboard
 
       def raise_auth_exception(error)
         raise "invalid auth challenge syntax: #{error}"
+      end
+
+      def check_no_spaces(tokens)
+        if tokens.length <= 1
+          raise_auth_exception "challenge contains no spaces"
+        end
       end
 
     end
