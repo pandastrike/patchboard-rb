@@ -29,6 +29,8 @@ class Patchboard
         check_no_spaces tokens
         name = tokens.shift
         parsed[name] = {}
+        # FIXME: flesh out no token error
+        check_no_tokens tokens
         while token = tokens.shift
           # Now I have two problems
           if md = WWWAuthRegex.match(token)
@@ -49,6 +51,12 @@ class Patchboard
       def check_no_spaces(tokens)
         if tokens.length <= 1
           raise_auth_exception "challenge contains no spaces"
+        end
+      end
+
+      def check_no_tokens(tokens)
+        if tokens.length == 0
+          raise_auth_exception "challenge contains no tokens"
         end
       end
 
