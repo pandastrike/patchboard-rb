@@ -71,20 +71,16 @@ class Patchboard
             # no previous quotes, no current quotes
             when parens_counter == 0 && !has_quote
               concat_array.push current
-#            # no previous quote, current quote found, begin concat
-#            when parens_counter == 0 && has_quote
-#              concat_string = concat_string + current
             # previous quote, no current quote, continue concat
             when parens_counter == 1 && !has_quote
               concat_string = concat_string + current
-#            when parens_counter == 1 && has_quote
-#              concat_string = concat_string + current
+            # previous quote, current quote, close concat
             when parens_counter == 2
               parens_counter = 0
               concat_array.push current
               concat_string = ""
             when parens_counter > 2
-              raise_auth_exception "too many quotes"
+              raise_auth_exception "too many damn quotes"
           end
 
         end # while loop
