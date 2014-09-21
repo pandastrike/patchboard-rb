@@ -9,6 +9,11 @@ class Patchboard
       ## The Custom scheme has two params, key and smurf
       ## The Basic scheme has one param, realm
       # %q[Custom key="otp.fBvQqSSlsNzJbqZcHKsylg", smurf="blue", Basic realm="foo"]
+      #
+      # Char by char parsing? Would have to consider escape characters \" if
+      # using a stateful counter.
+      #
+      # Token by token parsing, concatenating parameters that were split by spaces
 
       WWWAuthRegex = /
         # keys are not quoted
@@ -30,6 +35,7 @@ class Patchboard
         name = tokens.shift
         parsed[name] = {}
         # FIXME: flesh out no token error
+        pp tokens
         check_no_tokens tokens
         while token = tokens.shift
           # Now I have two problems
@@ -42,6 +48,29 @@ class Patchboard
           end
         end
         parsed
+      end
+
+      def concat_params(tokens_array)
+        parens_counter = 0
+        concat_string = ""
+        concat_array = []
+        while current = tokens_array.shift
+          #current = current.gsub(\\"\, '')
+          # FIXME: find quote one at a time? or all at once?
+          # How to detect param="value""""?
+          # Correctly space delimited, even number of parens, no escape slash
+          if found quote
+            increment parens_counter
+            concat_string = concat_string + current
+          if parens_counter == 2
+            parens_counter = 0
+            concat_array.push current
+            concat_string = ""
+        end
+
+        if parens_counters.odd?
+          raise_auth_exception "odd number of parentheses"
+        end
       end
 
       def raise_auth_exception(error)
