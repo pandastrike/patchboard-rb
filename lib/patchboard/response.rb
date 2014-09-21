@@ -55,21 +55,42 @@ class Patchboard
         concat_string = ""
         concat_array = []
         while current = tokens_array.shift
-          #current = current.gsub(\\"\, '')
           # FIXME: find quote one at a time? or all at once?
           # How to detect param="value""""?
           # Correctly space delimited, even number of parens, no escape slash
-          if found quote
-            increment parens_counter
-            concat_string = concat_string + current
-          if parens_counter == 2
-            parens_counter = 0
-            concat_array.push current
-            concat_string = ""
-        end
+          has_quote = false
+          current = current.gsub("\\\"", "")
+          current.each_char do |c|
+            if c == "\""
+              has_quote = true
+              parens_counter += 1
+            end 
+          end
+
+          case 
+            # no previous quotes, no current quotes
+            when parens_counter == 0 && !has_quote
+              concat_array.push current
+#            # no previous quote, current quote found, begin concat
+#            when parens_counter == 0 && has_quote
+#              concat_string = concat_string + current
+            # previous quote, no current quote, continue concat
+            when parens_counter == 1 && !has_quote
+              concat_string = concat_string + current
+#            when parens_counter == 1 && has_quote
+#              concat_string = concat_string + current
+            when parens_counter == 2
+              parens_counter = 0
+              concat_array.push current
+              concat_string = ""
+            when parens_counter > 2
+              raise_auth_exception "too many quotes"
+          end
+
+        end # while loop
 
         if parens_counters.odd?
-          raise_auth_exception "odd number of parentheses"
+          raise_auth_exception "odd number of quotes"
         end
       end
 
