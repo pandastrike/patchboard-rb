@@ -31,11 +31,11 @@ class Patchboard
         parsed = {}
         # FIXME:  This assumes that no quoted strings have spaces within.
         tokens = string.split(" ")
+        pp concat_params tokens
         check_no_spaces tokens
         name = tokens.shift
         parsed[name] = {}
         # FIXME: flesh out no token error
-        pp tokens
         check_no_tokens tokens
         while token = tokens.shift
           # Now I have two problems
@@ -55,17 +55,36 @@ class Patchboard
         concat_string = ""
         concat_array = []
         while current = tokens_array.shift
-          # FIXME: find quote one at a time? or all at once?
-          # How to detect param="value""""?
-          # Correctly space delimited, even number of parens, no escape slash
           has_quote = false
           current = current.gsub("\\\"", "")
           current.each_char do |c|
+            # FIXME: if not preceded by = and not the last index throw eror
+            # multiple occurences: param="="something", param="hello world""
             if c == "\""
               has_quote = true
               parens_counter += 1
             end 
           end
+
+          ### test
+          index_equal = current.index("=")
+          index_first_quote = current.index("\"")
+          
+          # value=" the_monster_will="
+          if index_equal > 0 && index_equal == index_first_quote + 1
+            if found_start
+              #raise_auth_exception "
+            found_start = true
+          end
+          if current.last == "\""
+            found_end = true
+          end
+
+          if parens_counter > 2
+            raise_auth_exception "too many damn quotes"
+          end
+
+          ### test
 
           case 
             # no previous quotes, no current quotes
@@ -84,10 +103,12 @@ class Patchboard
           end
 
         end # while loop
-
+        
         if parens_counters.odd?
           raise_auth_exception "odd number of quotes"
         end
+
+        concat_array
       end
 
       def raise_auth_exception(error)
