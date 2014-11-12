@@ -59,13 +59,20 @@ class Patchboard
         :url => url, :method => @method, :headers => headers
       }
 
+      input_options = self.process_args(args)
+
       if @auth_schemes && context.respond_to?(:authorizer)
-        scheme, credential = context.authorizer(@auth_schemes, resource, @name)
+        # Ugly hack to maintain backwards compatibility with existing 
+        # implementations of context.authorizer
+        scheme, credential = begin
+          context.authorizer(@auth_schemes, resource, @name, input_options)
+        rescue
+          context.authorizer(@auth_schemes, resource, @name)
+        end
 
         headers["Authorization"] = "#{scheme} #{credential}"
       end
 
-      input_options = self.process_args(args)
       if input_options[:body]
         options[:body] = input_options[:body]
       end
