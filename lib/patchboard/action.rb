@@ -66,7 +66,7 @@ class Patchboard
         # implementations of context.authorizer
         scheme, credential = begin
           context.authorizer(@auth_schemes, resource, @name, input_options)
-        rescue
+        rescue ArgumentError
           context.authorizer(@auth_schemes, resource, @name)
         end
 
