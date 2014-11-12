@@ -65,7 +65,11 @@ class Patchboard
         # Ugly hack to maintain backwards compatibility with existing 
         # implementations of context.authorizer
         scheme, credential = begin
-          context.authorizer(@auth_schemes, resource, @name, input_options)
+          context.authorizer(
+            :schemes => @auth_schemes, 
+            :resource => resource, :action => @name,
+            :request => input_options
+          )
         rescue ArgumentError
           context.authorizer(@auth_schemes, resource, @name)
         end
