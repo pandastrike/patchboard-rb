@@ -132,7 +132,7 @@ class Patchboard
         # TODO check query schema
         keys.each do |key|
           if string = (params[key.to_s] || params[key.to_sym])
-            parts << "#{URI.escape(key.to_s)}=#{URI.escape(string)}"
+            parts << "#{CGI::escape(key.to_s)}=#{CGI::escape(string)}"
           end
         end
         if parts.size > 0
