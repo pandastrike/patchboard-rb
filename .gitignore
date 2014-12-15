@@ -1,2 +1,5 @@
 *.gem
 node_modules
+.ruby-gemset
+Gemfile.lock
+
